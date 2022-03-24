@@ -1,0 +1,59 @@
+name: 'Get env-file from Vault'
+description: 'Get secrets from Vault and writes to a file'
+
+inputs:
+  VAULT_ADDR:
+    description: 'Vault url'
+    required: true
+
+  VAULT_USERNAME:
+    description: 'Vault login username'
+    required: true
+
+  VAULT_PASSWORD:
+    description: 'Vault login password'
+    required: true
+
+  VAULT_SECRETS_PATH:
+    description: 'Vault secrets path'
+    required: true
+
+  ENV_FILE_NAME:
+    description: 'Name of created env-file'
+    required: false
+    default: .env
+
+runs:
+  using: "composite"
+  steps:
+   - name: Install Hashicorp Vault
+     shell: bash
+     run: |
+        curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
+        sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
+        sudo apt-get update 
+        sudo apt-get install --reinstall -y vault
+        setcap cap_ipc_lock= /usr/bin/vault
+
+   - name: Login to Hashicorp Vault
+     shell: bash
+     env:
+       VAULT_ADDR: ${{ inputs.VAULT_ADDR }}
+       VAULT_SKIP_VERIFY: 'true'
+     run: |
+       vault login \
+         -no-print \
+         -method=userpass \
+         username=${{ inputs.VAULT_USERNAME }} \
+         password=${{ inputs.VAULT_PASSWORD }}
+
+   - name: Create env-file from Hashicorp Vault config
+     shell: bash
+     env:
+       VAULT_ADDR: ${{ inputs.VAULT_ADDR }}
+       VAULT_SKIP_VERIFY: 'true'
+     run: |
+        vault kv get -format=json ${{ inputs.VAULT_SECRETS_PATH }} \
+        | jq -r ".data.data" \
+        | jq -r 'keys[] as $k | "\($k)=\(.[$k])"' \
+        > ${{ inputs.ENV_FILE_NAME }}
