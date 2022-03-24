@@ -1,6 +1,10 @@
 name: 'Get env-file from Vault'
 description: 'Get secrets from Vault and writes to a file'
 
+branding:
+    icon: "bar-chart-2"
+    color: "purple"
+
 inputs:
   VAULT_ADDR:
     description: 'Vault url'
