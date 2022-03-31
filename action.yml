@@ -37,7 +37,7 @@ runs:
         sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
         sudo apt-get update 
         sudo apt-get install --reinstall -y vault
-        setcap cap_ipc_lock= /usr/bin/vault
+        sudo setcap cap_ipc_lock= /usr/bin/vault
 
    - name: Login to Hashicorp Vault
      shell: bash
